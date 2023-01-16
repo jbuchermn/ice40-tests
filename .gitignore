@@ -1,0 +1,4 @@
+*.json
+*.blif
+*.bin
+*.asc
