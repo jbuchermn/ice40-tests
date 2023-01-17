@@ -10,35 +10,140 @@ module main #(
     output usb_tx
 );
 
-parameter TARGET_RATE = 12;
-parameter RATE = CLOCK_RATE / (2 * TARGET_RATE);
-parameter WIDTH = $clog2(RATE);
+reg ready;
+reg error;
 
-reg [WIDTH - 1:0] counter;
-reg dir;
+reg [7:0] received;
+uart_rx uart_rx(clk, usb_rx, ready, received, error);
+
+always@(ready or error or received)
+    if(ready == 1'b1)
+        if(error == 1'b1) led = 8'hFF;
+        else led = received;
+    else led = 8'h00;
+
+endmodule
+
+
+module uart_rx #(
+    parameter CLOCK_RATE = 100000000,
+    parameter BAUD_RATE = 115200,
+    parameter OVR = 8,
+    parameter OVR_LIMIT = 1
+)(
+    input clk,
+    input rx,
+
+    output ready,
+    output[7:0] val,
+    output error
+);
+
+parameter RATE = CLOCK_RATE / (BAUD_RATE * OVR);
+parameter WIDTH = $clog2(RATE);
+parameter OVR_WIDTH = $clog2(OVR);
+
+
+parameter S_IDLE       = 3'b000;
+parameter S_DATA_BITS  = 3'b010;
+parameter S_PARITY_BIT = 3'b011;
+parameter S_STOP_BIT   = 3'b100;
+
+
+reg [WIDTH-1:0] counter = 0;
+reg [OVR-1:0] cur_ovr = {OVR{1'b1}};
+reg [OVR_WIDTH-1:0] sum_ovr = 0;
+reg [OVR_WIDTH-1:0] counter_ovr = 0;
+
+reg cur;
+assign cur = sum_ovr < (OVR / 2) ? 1'b0 : 1'b1;
+
+reg[OVR_WIDTH:0] cur_ovr_1;
+
+integer i;
+always@(cur_ovr) begin
+    cur_ovr_1 = 0;
+    for(i=0; i<OVR; i++)
+        cur_ovr_1 = cur_ovr_1 + cur_ovr[i];
+end
+
+
+reg [2:0] state = S_IDLE;
+reg [7:0] result = 0;
+reg [2:0] result_idx = 0;
+
 
 initial begin
-    counter = WIDTH'b0;
-    led = 8'b1;
-    dir = 1'b1;
+    val = 8'h0;
+    error = 1'b0;
+    ready = 1'b0;
 end
 
-always@(posedge clk) begin
+
+always @(posedge clk) begin
+    counter <= counter + 1;
+
     if(counter == RATE[WIDTH-1:0]) begin
         counter <= 0;
-        if((led == 8'b10000000 && dir == 1'b1) || (led == 8'b00000001 && dir == 1'b0)) begin
-            dir = ~dir;
+        counter_ovr <= counter_ovr + 1;
+
+        cur_ovr <= (cur_ovr << 1) | rx;
+
+        sum_ovr <= sum_ovr + rx;
+        if(counter_ovr == {OVR_WIDTH{1'b1}}) begin
+            counter_ovr <= 0;
+            sum_ovr <= 0;
         end
 
-        if(dir == 1'b1) begin
-            led = led << 1;
-        end else begin
-            led = led >> 1;
-        end
+        case(state) 
+            S_IDLE: begin
+                if (cur_ovr_1 < OVR_LIMIT) begin
+                    counter_ovr <= 0;
+                    sum_ovr <= 0;
 
-    end else begin
-        counter <= counter + 1'b1;
+                    state <= S_DATA_BITS;
+
+                    result <= 0;
+                    result_idx <= 0;
+                    ready <= 1'b0;
+                    error <= 1'b0;
+                end
+            end
+
+            S_DATA_BITS: begin
+                if(counter_ovr == {OVR_WIDTH{1'b1}}) begin
+                    state <= result_idx == 7 ? S_PARITY_BIT : S_DATA_BITS;
+
+                    result <= (result >> 1) | (cur << 7);
+                    result_idx <= result_idx + 1;
+                end
+            end
+
+            S_PARITY_BIT: begin
+                if(counter_ovr == {OVR_WIDTH{1'b1}}) begin
+                    state <= S_STOP_BIT;
+
+                    error <= (cur ^ (~^result)) ? 1'b1 : 1'b0;
+                end
+            end
+
+            S_STOP_BIT: begin
+                if(counter_ovr == {OVR_WIDTH{1'b1}}) begin
+                    state <= (cur == 1'b1) ? S_IDLE : S_STOP_BIT;
+
+                    val <= result;
+                    error <= error | ~cur;
+                    ready <= 1'b1;
+                end
+            end
+
+            default:
+                state <= S_IDLE;
+        endcase
+
     end
 end
+
+
 
 endmodule
