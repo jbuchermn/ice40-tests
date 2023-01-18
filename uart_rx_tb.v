@@ -17,6 +17,7 @@ initial begin
 end
 
 reg rx;
+
 wire ready;
 wire error;
 wire [7:0] val;

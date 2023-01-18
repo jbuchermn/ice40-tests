@@ -29,7 +29,7 @@ parameter S_STOP_BIT   = 3'b100;
 reg [2:0] state = S_IDLE;
 
 wire search_en;
-assign search_en = state == S_IDLE ? 1 : 0;
+assign search_en = (state == S_IDLE) ? 1 : 0;
 
 wire clk_baud;
 reg clk_baud_last;

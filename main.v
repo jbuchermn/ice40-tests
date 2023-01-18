@@ -12,10 +12,17 @@ module main #(
 
 wire ready;
 wire error;
+wire done;
 
 wire [7:0] received;
+wire [7:0] processed;
+
+assign processed = received + 1;
+
+reg [1:0] state = 0;
 
 uart_rx #(CLOCK_RATE, 115200, 8, 0) uart_rx(~rst_n, clk, usb_rx, ready, error, received);
+uart_tx #(CLOCK_RATE, 115200, 0)    uart_tx(~rst_n, clk, processed, state == 1, usb_tx, done);
 
 reg [7:0] led_reg;
 assign led = led_reg;
@@ -28,4 +35,14 @@ always@*
     else
         led_reg = 8'h00;
 
+always@(posedge clk) begin
+    case(state)
+        0:
+            if(ready) state <= 1;
+        1:
+            if(done) state <= 2;
+        2:
+            if(~ready) state <= 0;
+    endcase
+end
 endmodule

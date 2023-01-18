@@ -46,7 +46,7 @@ $(VVPS): %.vvp: %.v $(MODSRCS)
 	$(SIMCOMPILER) $(SIMCOMPFLAGS) -o $@ $^
 
 simulate: $(VVPS)
-	$(SIMULATOR) $(SIMFLAGS) $< 
+	$(foreach file, $^, $(SIMULATOR) $(SIMFLAGS) $(file);)
 
 prog: $(BINS)
 	sudo iceprog $<
