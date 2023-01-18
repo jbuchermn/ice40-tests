@@ -3,7 +3,7 @@
 module uart_rx_tb();
 
 reg clk;
-reg rst_n;
+reg rst;
 
 initial begin
     clk = 1'b0;
@@ -11,9 +11,9 @@ initial begin
 end
 
 initial begin
-    rst_n = 1'b1;
+    rst = 1'b1;
     #100
-    rst_n = 1'b0;
+    rst = 1'b0;
 end
 
 reg rx;
@@ -21,14 +21,14 @@ wire ready;
 wire error;
 wire [7:0] val;
 
-uart_rx uart(rst_n, clk, rx, ready, error, val);
+uart_rx uart(rst, clk, rx, ready, error, val);
 
 
 integer i;
 initial begin
     $dumpfile("uart_rx_wave.vcd");
     $dumpvars(0, clk);
-    $dumpvars(0, rst_n);
+    $dumpvars(0, rst);
     $dumpvars(0, rx);
     $dumpvars(0, ready);
     $dumpvars(0, error);
