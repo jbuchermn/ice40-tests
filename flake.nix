@@ -21,6 +21,9 @@
           yosys
           nextpnr
           icestorm
+
+          verilog  # icarus
+          gtkwave
         ];
       };
     }

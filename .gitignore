@@ -2,3 +2,6 @@
 *.blif
 *.bin
 *.asc
+*.vvp
+*.vcd
+*.rpt
