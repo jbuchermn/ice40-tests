@@ -1,5 +1,5 @@
 /////////////////////////////////////////////
-`define INCLUDE_UART_TX_PARITY
+// `define INCLUDE_UART_TX_PARITY
 
 module uart_tx #(
     parameter CLOCK_RATE = 100000000,
