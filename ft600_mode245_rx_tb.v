@@ -3,6 +3,12 @@
 /////////////////////////////////////////////
 module ft600_mode245_rx_tb();
 
+parameter RX_BUFFER = 16;
+parameter TX_BUFFER = 16;
+
+parameter RX_BUFFER_WIDTH = $clog2(RX_BUFFER);
+parameter TX_BUFFER_WIDTH = $clog2(TX_BUFFER);
+
 reg clk;
 reg rst;
 
@@ -33,9 +39,9 @@ initial begin
     rst = 1'b0;
 end
 
-wire [7:0] rx_buf [0:15];
+wire [8*RX_BUFFER-1:0] rx_buf;
 wire [3:0] rx_buf_written;
-reg [7:0] tx_buf [0:15];
+reg [8*TX_BUFFER-1:0] tx_buf;
 reg [3:0] tx_buf_send;
 wire [3:0] tx_buf_sent;
 
@@ -79,22 +85,7 @@ initial begin
     $dumpvars(0, ft_rd);
     $dumpvars(0, ft_wr);
     $dumpvars(0, ft600);
-    $dumpvars(0, rx_buf[0]);
-    $dumpvars(0, rx_buf[1]);
-    $dumpvars(0, rx_buf[2]);
-    $dumpvars(0, rx_buf[3]);
-    $dumpvars(0, rx_buf[4]);
-    $dumpvars(0, rx_buf[5]);
-    $dumpvars(0, rx_buf[6]);
-    $dumpvars(0, rx_buf[7]);
-    $dumpvars(0, rx_buf[8]);
-    $dumpvars(0, rx_buf[9]);
-    $dumpvars(0, rx_buf[10]);
-    $dumpvars(0, rx_buf[11]);
-    $dumpvars(0, rx_buf[12]);
-    $dumpvars(0, rx_buf[13]);
-    $dumpvars(0, rx_buf[14]);
-    $dumpvars(0, rx_buf[15]);
+    $dumpvars(0, rx_buf);
 
     ft_txe = 1'b1;
     ft_rxf = 1'b1;

@@ -3,6 +3,12 @@
 /////////////////////////////////////////////
 module ft600_mode245_tx_tb();
 
+parameter RX_BUFFER = 16;
+parameter TX_BUFFER = 16;
+
+parameter RX_BUFFER_WIDTH = $clog2(RX_BUFFER);
+parameter TX_BUFFER_WIDTH = $clog2(TX_BUFFER);
+
 reg clk;
 reg rst;
 
@@ -33,19 +39,24 @@ initial begin
     rst = 1'b0;
 end
 
-wire [7:0] rx_buf [0:15];
+wire [8*RX_BUFFER-1:0] rx_buf;
 wire [3:0] rx_buf_written;
 wire [3:0] tx_buf_sent;
 
 wire [3:0] tx_buf_send;
-wire [7:0] tx_buf [0:15];
+wire [8*TX_BUFFER-1:0] tx_buf;
+
+wire stalled;
 
 dummy_feeder feeder(
     rst,
     clk,
 
     tx_buf,
-    tx_buf_send
+    tx_buf_send,
+    tx_buf_sent,
+
+    stalled
 );
 
 
@@ -92,54 +103,10 @@ initial begin
     #10000;
     ft_txe = 0;
 
+    #31;
+    ft_txe = 1;
+
     #100000;
     $finish;
 end
-endmodule
-
-
-/////////////////////////////////////////////
-module dummy_feeder #(
-    parameter TX_BUFFER = 16,
-    parameter TX_BUFFER_WIDTH = $clog2(TX_BUFFER),
-
-    parameter CLOCK_RATE = 100000000,
-    parameter FREQ = 50000000
-)(
-    input rst,
-    input clk,
-
-    output reg [7: 0] tx_buf [0:TX_BUFFER-1],
-    output reg [TX_BUFFER_WIDTH-1:0] tx_buf_send
-);
-
-parameter RATE = CLOCK_RATE / FREQ;
-parameter WIDTH = $clog2(RATE);
-
-reg [WIDTH:0] counter = 0;
-
-reg [7:0] value;
-
-initial begin
-    tx_buf_send = 0;
-    counter = 0;
-    value = 0;
-end
-
-
-always@(posedge clk) begin
-    if(rst) begin
-        tx_buf_send <= 0;
-        counter <= 0;
-    end else begin
-        if(counter == RATE-1) begin
-            counter <= 0;
-            tx_buf[tx_buf_send] <= value;
-            value <= value + 1;
-            tx_buf_send <= (tx_buf_send + 1)%TX_BUFFER;
-        end else
-            counter <= counter+1;
-    end
-end
-
 endmodule

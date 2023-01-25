@@ -17,30 +17,30 @@ set_io usb_tx M9
 
 # Alchitry Ft
 
-set_io ft600_d[ 0] J12 # BB24 = IOR_118
-set_io ft600_d[ 1] H12 # BB23 = IOR_120
-set_io ft600_d[ 2] G14 # BB21 = IOR_141
-set_io ft600_d[ 3] F14 # BB20 = IOR_140
-set_io ft600_d[ 4] E12 # BB18 = IOR_147
-set_io ft600_d[ 5] E14 # BB17 = IOR_148
-set_io ft600_d[ 6] D14 # BB15 = IOR_152
-set_io ft600_d[ 7] C14 # BB14 = IOR_154
-set_io ft600_d[ 8] H11 # BB27 = IOR_128
-set_io ft600_d[ 9] G11 # BB28 = IOR_136
-set_io ft600_d[10] G12 # BB30 = IOR_129
-set_io ft600_d[11] F12 # BB31 = IOR_137
-set_io ft600_d[12] D12 # BB36 = IOR_160
-set_io ft600_d[13] D11 # BB37 = IOT_178
-set_io ft600_d[14] A2  # AB21 = IOT_223
-set_io ft600_d[15] A1  # AB20 = IOT_225
+set_io ft_data[0]  J12 # BB24 = IOR_118
+set_io ft_data[1]  H12 # BB23 = IOR_120
+set_io ft_data[2]  G14 # BB21 = IOR_141
+set_io ft_data[3]  F14 # BB20 = IOR_140
+set_io ft_data[4]  E12 # BB18 = IOR_147
+set_io ft_data[5]  E14 # BB17 = IOR_148
+set_io ft_data[6]  D14 # BB15 = IOR_152
+set_io ft_data[7]  C14 # BB14 = IOR_154
+set_io ft_data[8]  H11 # BB27 = IOR_128
+set_io ft_data[9]  G11 # BB28 = IOR_136
+set_io ft_data[10] G12 # BB30 = IOR_129
+set_io ft_data[11] F12 # BB31 = IOR_137
+set_io ft_data[12] D12 # BB36 = IOR_160
+set_io ft_data[13] D11 # BB37 = IOT_178
+set_io ft_data[14] A2  # AB21 = IOT_223
+set_io ft_data[15] A1  # AB20 = IOT_225
 
-set_io ft600_be[0] C3  # AB18 = IOL_4_P
-set_io ft600_be[1] D3  # AB17 = IOL_4_N
+set_io ft_be[0] C3  # AB18 = IOL_4_P
+set_io ft_be[1] D3  # AB17 = IOL_4_N
 
-set_io ft600_txe A5    # AB27 = IOT_208
-set_io ft600_rxf C5    # AB28 = IOT_212
-set_io ft600_wr  D5    # AB30 = IOT_211
-set_io ft600_oe  E11   # BB34 = IOR_146
-set_io ft600_rd  C4    # AB31 = IOT_221
+set_io ft_txe A5    # AB27 = IOT_208
+set_io ft_rxf C5    # AB28 = IOT_212
+set_io ft_wr  D5    # AB30 = IOT_211
+set_io ft_oe  E11   # BB34 = IOR_146
+set_io ft_rd  C4    # AB31 = IOT_221
 
-set_io ft600_clk F11   # BB33 = IOR_144
+set_io ft_clk F11   # BB33 = IOR_144
