@@ -12,7 +12,7 @@ end
 
 initial begin
     rst = 1'b1;
-    #100
+    #1000
     rst = 1'b0;
 end
 
@@ -22,7 +22,7 @@ wire ready;
 wire error;
 wire [7:0] val;
 
-uart_rx uart(rst, clk, rx, ready, error, val);
+uart_rx #(100000000, 115200) uart(rst, clk, rx, ready, error, val);
 
 
 integer i;

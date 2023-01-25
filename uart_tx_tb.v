@@ -22,7 +22,7 @@ reg start;
 wire done;
 wire tx;
 
-uart_tx #(100000000, 115200, 0) uart(rst, clk, val, start & done, tx, done);
+uart_tx #(100000000, 100000000) uart(rst, clk, val, start & done, tx, done);
 
 
 integer i;
@@ -36,7 +36,7 @@ initial begin
     $dumpvars(0, val);
     $dumpvars(0, uart);
 
-    val = 8'h95;
+    val = 8'b11010010;
     start = 1;
     #500000;
     $finish;
