@@ -5,7 +5,7 @@ PIN_DEF := alchitry_cu.pcf
 DEVICE := hx8k
 PACKAGE := cb132
 
-SIMCOMPILER := iverilog
+SIMCOMPILER := iverilog -g2005-sv
 SIMULATOR := vvp
 
 SYNTHFLAGS := -p synth_ice40 -top $(TOPMODULE)
