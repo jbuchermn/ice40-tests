@@ -12,3 +12,31 @@ set_io led[7] N14
 
 set_io usb_rx P14
 set_io usb_tx M9
+
+# set_io ft600_d[ 0]
+# set_io ft600_d[ 1]
+# set_io ft600_d[ 2]
+# set_io ft600_d[ 3]
+# set_io ft600_d[ 4]
+# set_io ft600_d[ 5]
+# set_io ft600_d[ 6]
+# set_io ft600_d[ 7]
+# set_io ft600_d[ 8]
+# set_io ft600_d[ 9]
+# set_io ft600_d[10]
+# set_io ft600_d[11]
+# set_io ft600_d[12]
+# set_io ft600_d[13]
+# set_io ft600_d[14] A2 # AB21 = IOT_223
+# set_io ft600_d[15] A1 # AB20 = IOT_225
+
+set_io ft600_be[0] C3 # AB18 = IOL_4_P
+set_io ft600_be[1] D3 # AB17 = IOL_4_N
+
+set_io ft600_txe A5   # AB27 = IOT_208
+set_io ft600_rxf C5   # AB28 = IOT_212
+set_io ft600_wr  D5   # AB30 = IOT_211
+set_io ft600_oe  E11  # BB34 = IOR_146
+set_io ft600_rd  C4   # AB31 = IOT_221
+
+set_io ft600_clk F11  # BB33 = IOR_144
