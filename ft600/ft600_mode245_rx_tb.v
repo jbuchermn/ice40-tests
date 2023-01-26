@@ -1,20 +1,17 @@
 `timescale 1ns / 1ps
 
 /////////////////////////////////////////////
-module ft600_mode245_tx_tb();
+module ft600_mode245_rx_tb();
 
-parameter RX_BUFFER = 16;
-parameter TX_BUFFER = 16;
-
-parameter RX_BUFFER_WIDTH = $clog2(RX_BUFFER);
-parameter TX_BUFFER_WIDTH = $clog2(TX_BUFFER);
+parameter RX_BUF_WIDTH = 4;
+parameter TX_BUF_WIDTH = 4;
 
 reg clk;
 reg rst;
 
 reg ft_clk;
-wire [15:0] ft_data;
-wire [1:0] ft_be;
+reg [15:0] ft_data;
+reg [1:0] ft_be;
 reg ft_txe;
 reg ft_rxf;
 wire ft_oe;
@@ -24,12 +21,12 @@ wire ft_wr;
 
 initial begin
     clk = 1'b0;
+    #2 // Phase
     forever #5 clk = ~clk; // 100MHz
 end
 
 initial begin
     ft_clk = 1'b0;
-    #2 // Phase
     forever #5 ft_clk = ~ft_clk; // 100MHz
 end
 
@@ -39,27 +36,17 @@ initial begin
     rst = 1'b0;
 end
 
-wire [8*RX_BUFFER-1:0] rx_buf;
+wire [(8<<RX_BUF_WIDTH)-1:0] rx_buf;
 wire [3:0] rx_buf_written;
+reg [(8<<TX_BUF_WIDTH)-1:0] tx_buf;
+reg [3:0] tx_buf_send;
 wire [3:0] tx_buf_sent;
 
-wire [3:0] tx_buf_send;
-wire [8*TX_BUFFER-1:0] tx_buf;
+wire [15:0] _ft_data;
+assign _ft_data = ft_data;
 
-wire stalled;
-
-dummy_feeder feeder(
-    rst,
-    clk,
-
-    tx_buf,
-    tx_buf_send,
-    tx_buf_sent,
-
-    stalled
-);
-
-
+wire [1:0] _ft_be;
+assign _ft_be = ft_be;
 
 ft600_mode245 ft600(
     rst,
@@ -73,8 +60,8 @@ ft600_mode245 ft600(
     tx_buf_sent,
 
     ft_clk,
-    ft_data,
-    ft_be,
+    _ft_data,
+    _ft_be,
     ft_txe,
     ft_rxf,
     ft_oe,
@@ -83,7 +70,7 @@ ft600_mode245 ft600(
 );
 
 initial begin
-    $dumpfile("ft600_mode245_tx_wave.vcd");
+    $dumpfile("ft600_mode245_rx_wave.vcd");
     $dumpvars(0, clk);
     $dumpvars(0, rst);
     $dumpvars(0, ft_clk);
@@ -95,18 +82,51 @@ initial begin
     $dumpvars(0, ft_rd);
     $dumpvars(0, ft_wr);
     $dumpvars(0, ft600);
-    $dumpvars(0, tx_buf_sent);
+    $dumpvars(0, rx_buf);
 
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
+    ft_data = 16'h0123;
+    ft_be = 2'b11;
 
-    #10000;
-    ft_txe = 0;
+    #20000;
+    ft_rxf = 1'b0;
 
-    #31;
-    ft_txe = 1;
+    #30
+    ft_data = 16'h4567;
 
-    #100000;
+    #10
+    ft_data = 16'h89AB;
+
+    #10
+    ft_data = 16'hCDEF;
+
+    #10
+    ft_data = 16'hFFEE;
+
+    #10
+    ft_data = 16'hDDCC;
+
+    #10
+    ft_data = 16'hBBAA;
+
+    #10
+    ft_data = 16'h9988;
+
+    #10
+    ft_data = 16'h7766;
+
+    #10
+    ft_data = 16'h55;
+    ft_be = 2'b10;
+
+    #10;
+    ft_rxf = 1'b1;
+
+    #20000;
     $finish;
 end
 endmodule
+
+
+

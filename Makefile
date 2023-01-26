@@ -1,7 +1,7 @@
 PROJ := main
 TOPMODULE := main
 
-PIN_DEF := alchitry_cu.pcf
+PIN_DEF := ../alchitry_cu.pcf
 DEVICE := hx8k
 PACKAGE := cb132
 
