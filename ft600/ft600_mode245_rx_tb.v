@@ -21,12 +21,13 @@ wire ft_wr;
 
 initial begin
     clk = 1'b0;
-    #2 // Phase
+    // #2 // Phase
     forever #5 clk = ~clk; // 100MHz
 end
 
 initial begin
     ft_clk = 1'b0;
+    // #2 // Phase
     forever #5 ft_clk = ~ft_clk; // 100MHz
 end
 
@@ -36,28 +37,31 @@ initial begin
     rst = 1'b0;
 end
 
-wire [(8<<RX_BUF_WIDTH)-1:0] rx_buf;
-wire [3:0] rx_buf_written;
-reg [(8<<TX_BUF_WIDTH)-1:0] tx_buf;
-reg [3:0] tx_buf_send;
-wire [3:0] tx_buf_sent;
-
 wire [15:0] _ft_data;
 assign _ft_data = ft_data;
 
 wire [1:0] _ft_be;
 assign _ft_be = ft_be;
 
+wire tx_en = 0;
+wire [7:0] tx_in = 8'h00;
+wire tx_full;
+
+wire rx_en = 1;
+wire [7:0] rx_out;
+wire rx_empty;
+
 ft600_mode245 ft600(
     rst,
     clk,
 
-    rx_buf,
-    rx_buf_written,
+    tx_en,
+    tx_in,
+    tx_full,
 
-    tx_buf,
-    tx_buf_send,
-    tx_buf_sent,
+    rx_en,
+    rx_out,
+    rx_empty,
 
     ft_clk,
     _ft_data,
@@ -81,8 +85,13 @@ initial begin
     $dumpvars(0, ft_oe);
     $dumpvars(0, ft_rd);
     $dumpvars(0, ft_wr);
+    $dumpvars(0, tx_en);
+    $dumpvars(0, tx_in);
+    $dumpvars(0, tx_full);
+    $dumpvars(0, rx_en);
+    $dumpvars(0, rx_out);
+    $dumpvars(0, rx_empty);
     $dumpvars(0, ft600);
-    $dumpvars(0, rx_buf);
 
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
