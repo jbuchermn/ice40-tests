@@ -21,12 +21,13 @@ wire ft_wr;
 
 initial begin
     clk = 1'b0;
-    // #2 // Phase
+    #2 // Phase
     forever #5 clk = ~clk; // 100MHz
 end
 
 initial begin
     ft_clk = 1'b0;
+    // #2 // Phase
     forever #5 ft_clk = ~ft_clk; // 100MHz
 end
 
@@ -36,20 +37,23 @@ initial begin
     rst = 1'b0;
 end
 
-wire tx_en = 1;
-wire [7:0] tx_in = 8'hFE;
+reg tx_en;
+reg [15:0] tx_in;
 wire tx_full;
 
 wire rx_en = 0;
-wire [7:0] rx_out;
+wire [15:0] rx_out;
 wire rx_empty;
+
+wire tx_en2 = 1;
+reg [15:0] tx_in2;
 
 ft600_mode245 ft600(
     rst,
     clk,
 
-    tx_en,
-    tx_in,
+    tx_en2,
+    tx_in2,
     tx_full,
 
     rx_en,
@@ -64,6 +68,14 @@ ft600_mode245 ft600(
     ft_oe,
     ft_rd,
     ft_wr
+);
+
+count_feeder count(
+    rst,
+    clk,
+
+    tx_in2,
+    tx_full
 );
 
 initial begin
@@ -89,13 +101,41 @@ initial begin
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
 
+    tx_in = 16'hFEDC;
+    tx_en = 1;
+
     #10000;
     ft_txe = 0;
 
     #20;
+    tx_in = 16'hBEB0;
+
+    #20;
+    tx_in = 16'hBCB0;
+
+    #20;
+    tx_in = 16'hAAB0;
+
+    #20;
+    tx_en = 0;
+
+    #200
     ft_txe = 1;
 
     #100000;
+
+
+    tx_in = 16'hFFAA;
+    tx_en = 1;
+
+    #10;
+    tx_en = 0;
+
+    #50
+    ft_txe = 0;
+
+    #50000;
+
     $finish;
 end
 endmodule

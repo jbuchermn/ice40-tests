@@ -27,7 +27,7 @@ end
 
 initial begin
     ft_clk = 1'b0;
-    // #2 // Phase
+    #2 // Phase
     forever #5 ft_clk = ~ft_clk; // 100MHz
 end
 
@@ -44,11 +44,11 @@ wire [1:0] _ft_be;
 assign _ft_be = ft_be;
 
 wire tx_en = 0;
-wire [7:0] tx_in = 8'h00;
+wire [15:0] tx_in;
 wire tx_full;
 
 wire rx_en = 1;
-wire [7:0] rx_out;
+wire [15:0] rx_out;
 wire rx_empty;
 
 ft600_mode245 ft600(

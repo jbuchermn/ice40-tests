@@ -8,12 +8,12 @@ module ft600_mode245 #(
 
     /* tx_en on posedge clk => append tx_input to FIFO */
     input tx_en,
-    input [7:0] tx_in,
+    input [15:0] tx_in,
     output reg tx_full,
 
     /* rx_en on negedge clk => next posedge clk next value */
     input rx_en,
-    output reg [7:0] rx_out,
+    output reg [15:0] rx_out,
     output reg rx_empty,
 
     /* FT600 pins */
@@ -27,29 +27,49 @@ module ft600_mode245 #(
     output reg ft_wr
 );
 
-reg [7:0] rx_buf [0:(1<<RX_BUF_WIDTH)-1];
-reg [7:0] tx_buf [0:(1<<TX_BUF_WIDTH)-1];
+reg [15:0] rx_buf [0:(1<<RX_BUF_WIDTH)-1];
+reg [15:0] tx_buf [0:(1<<TX_BUF_WIDTH)-1];
 
-reg [TX_BUF_WIDTH-1:0] tx_read_addr;
+// cd_ prefix for clock domain FT600
+reg [TX_BUF_WIDTH-1:0] cd_tx_read_addr;
 reg [TX_BUF_WIDTH-1:0] tx_write_addr;
-wire [TX_BUF_WIDTH-1:0] n_tx_read_addr;
-assign n_tx_read_addr = tx_read_addr + 1;
+reg [RX_BUF_WIDTH-1:0] rx_read_addr;
+reg [RX_BUF_WIDTH-1:0] cd_rx_write_addr;
 
+// plus one wire
 wire [TX_BUF_WIDTH-1:0] n_tx_write_addr;
 assign n_tx_write_addr = tx_write_addr + 1;
 
-reg [RX_BUF_WIDTH-1:0] rx_read_addr;
-reg [RX_BUF_WIDTH-1:0] rx_write_addr;
+// greyed and crossed
+wire [TX_BUF_WIDTH-1:0] grey_tx_read_addr;
+crossdomain #(TX_BUF_WIDTH) cross_cd_tx_read_addr(rst, clk, (cd_tx_read_addr >> 1) ^ cd_tx_read_addr, grey_tx_read_addr);
+
+wire [TX_BUF_WIDTH-1:0] cd_grey_tx_write_addr;
+crossdomain #(TX_BUF_WIDTH) cross_tx_write_addr(rst, ft_clk, (tx_write_addr >> 1) ^ tx_write_addr, cd_grey_tx_write_addr);
+
+wire [TX_BUF_WIDTH-1:0] grey_rx_write_addr;
+crossdomain #(RX_BUF_WIDTH) cross_cd_rx_write_addr(rst, clk, (cd_rx_write_addr >> 1) ^ cd_rx_write_addr, grey_rx_write_addr);
+
+// greyed
+wire [TX_BUF_WIDTH-1:0] grey_n_tx_write_addr;
+assign grey_n_tx_write_addr = (n_tx_write_addr >> 1) ^ n_tx_write_addr;
+
+wire [RX_BUF_WIDTH-1:0] grey_rx_read_addr;
+assign grey_rx_read_addr = (rx_read_addr >> 1) ^ rx_read_addr;
+
+wire [TX_BUF_WIDTH-1:0] grey_cd_tx_read_addr;
+assign grey_cd_tx_read_addr = (cd_tx_read_addr >> 1) ^ cd_tx_read_addr;
+
 
 initial begin
     tx_full = 0;
-    tx_read_addr = 0;
+    cd_tx_read_addr = 0;
     tx_write_addr = 0;
 
     rx_out = 0;
-    rx_empty = 0;
+    rx_empty = 1;
     rx_read_addr = 0;
-    rx_write_addr = 0;
+    cd_rx_write_addr = 0;
 end
 
 
@@ -64,7 +84,7 @@ parameter S_READING = 2'b01;
 parameter S_WRITING = 2'b10;
 
 reg [1:0] state = 0;
-reg [1:0] tx_pending = 0;
+reg tx_pending = 0;
 
 initial begin
     _ft_data = 16'hz;
@@ -83,30 +103,30 @@ end
 always@(posedge clk) begin
     if(rst) begin
         tx_full = 0;
-        tx_read_addr = 0;
         tx_write_addr = 0;
 
     end else begin
         if(tx_en) begin
-            if(~tx_full & n_tx_write_addr != tx_read_addr) begin
+            if(~tx_full & grey_n_tx_write_addr != grey_tx_read_addr) begin
                 tx_buf[tx_write_addr] <= tx_in;
                 tx_write_addr <= n_tx_write_addr;
             end
         end
-        tx_full <= n_tx_write_addr == tx_read_addr;
+        tx_full <= grey_n_tx_write_addr == grey_tx_read_addr;
     end
 end
 
 always@(negedge clk) begin
     if(rst) begin
         rx_out = 0;
-        rx_empty = 0;
+        rx_empty = 1;
+
         rx_read_addr = 0;
-        rx_write_addr = 0;
+        tx_write_addr = 0;
 
     end else begin
         if(rx_en) begin
-            if(rx_write_addr != rx_read_addr) begin
+            if(grey_rx_write_addr != grey_rx_read_addr) begin
                 rx_out <= rx_buf[rx_read_addr];
                 rx_read_addr <= rx_read_addr + 1;
                 rx_empty <= 0;
@@ -117,8 +137,6 @@ always@(negedge clk) begin
     end
 
 end
-
-// TODO: Domain crossing
 
 
 /////////////////////////////////////
@@ -151,39 +169,31 @@ always@(negedge ft_clk) begin
 
         end else if(state == S_WRITING) begin
             tx_pending <= 0;
-            if(tx_read_addr != tx_write_addr) begin
+            if(grey_cd_tx_read_addr != cd_grey_tx_write_addr) begin
                 ft_rd <= 1;
                 if(~ft_oe) begin
                     ft_oe <= 1;
                     ft_wr <= 1;
                 end else begin
-                    if (n_tx_read_addr == tx_write_addr) begin
-                        _ft_data[7:0] <= tx_buf[tx_read_addr];
+                    _ft_data <= tx_buf[cd_tx_read_addr];
 
-                        _ft_be <= 2'b01;
-                        ft_wr <= 0;
+                    _ft_be <= 2'b11;
+                    ft_wr <= 0;
 
-                        tx_pending <= 1;
-
-                    end else begin
-                        _ft_data[7:0] <= tx_buf[tx_read_addr];
-                        _ft_data[15:8] <= tx_buf[n_tx_read_addr];
-
-                        _ft_be <= 2'b11;
-                        ft_wr <= 0;
-
-                        tx_pending <= 2;
-                    end
+                    tx_pending <= 1;
                 end
             end
         end
 
-        if(tx_read_addr == tx_write_addr) ft_wr <= 1;
+        if(grey_cd_tx_read_addr == cd_grey_tx_write_addr) ft_wr <= 1;
     end
 end
 
 always@(posedge ft_clk) begin
     if(rst) begin
+        cd_tx_read_addr = 0;
+        cd_rx_write_addr = 0;
+
         state <= S_IDLE;
 
     end else begin
@@ -192,26 +202,44 @@ always@(posedge ft_clk) begin
 
             if(~ft_oe & ~ft_rd) begin
                 if(ft_be == 2'b11) begin
-                    rx_buf[rx_write_addr] <= ft_data[15:8];
-                    rx_buf[rx_write_addr+1] <= ft_data[7:0];
-
-                    rx_write_addr <= rx_write_addr + 2;
+                    rx_buf[cd_rx_write_addr] <= ft_data;
+                    cd_rx_write_addr <= cd_rx_write_addr + 1;
                 end else if(ft_be == 2'b01) begin
-                    rx_buf[rx_write_addr] <= ft_data[15:8];
-
-                    rx_write_addr <= rx_write_addr + 1;
+                    rx_buf[cd_rx_write_addr] <= ft_data[15:8] << 8;
+                    cd_rx_write_addr <= cd_rx_write_addr + 1;
                 end else if(ft_be == 2'b10) begin
-                    rx_buf[rx_write_addr] <= ft_data[7:0];
-
-                    rx_write_addr <= rx_write_addr + 1;
+                    rx_buf[cd_rx_write_addr] <= ft_data[7:0] << 8;
+                    cd_rx_write_addr <= cd_rx_write_addr + 1;
                 end
             end
         end else if(~ft_txe) begin
             state <= S_WRITING;
-            tx_read_addr <= tx_read_addr + tx_pending;
+            cd_tx_read_addr <= cd_tx_read_addr + tx_pending;
         end else begin
             state <= S_IDLE;
         end
+    end
+end
+
+endmodule
+
+/////////////////////////////////////////////
+module crossdomain #(
+    parameter WIDTH = 1
+)(
+    input rst,
+    input clk,
+    input [WIDTH-1:0] in,
+    output reg [WIDTH-1:0] out
+);
+
+reg [WIDTH-1:0] tmp;
+
+always@(posedge clk) begin
+    if(rst) begin
+        {out, tmp} <= 0;
+    end else begin
+        {out, tmp} <= {tmp, in};
     end
 end
 
