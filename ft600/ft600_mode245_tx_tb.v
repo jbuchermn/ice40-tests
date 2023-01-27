@@ -45,8 +45,8 @@ wire rx_en = 0;
 wire [15:0] rx_out;
 wire rx_empty;
 
-wire tx_en2 = 1;
-reg [15:0] tx_in2;
+wire tx_en2;
+wire [15:0] tx_in2;
 
 ft600_mode245 ft600(
     rst,
@@ -74,6 +74,7 @@ count_feeder count(
     rst,
     clk,
 
+    tx_en2,
     tx_in2,
     tx_full
 );
@@ -102,24 +103,27 @@ initial begin
     ft_rxf = 1'b1;
 
     tx_in = 16'hFEDC;
+    tx_en = 0;
+
+    #1200
+
+    #10;
     tx_en = 1;
+    tx_in = 16'hBEB0;
+
+    #10;
+    tx_in = 16'hBCB0;
+
+    #10;
+    tx_in = 16'hAAB0;
+
+    #10;
+    tx_en = 0;
 
     #10000;
     ft_txe = 0;
 
-    #20;
-    tx_in = 16'hBEB0;
-
-    #20;
-    tx_in = 16'hBCB0;
-
-    #20;
-    tx_in = 16'hAAB0;
-
-    #20;
-    tx_en = 0;
-
-    #200
+    #199
     ft_txe = 1;
 
     #100000;

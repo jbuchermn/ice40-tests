@@ -18,17 +18,32 @@ module main(
 wire rst;
 assign rst = ~rst_n;
 
-parameter RX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
-parameter TX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
+parameter RX_BUF_WIDTH = 1; // 2^8 * 16bit = 4096bit
+parameter TX_BUF_WIDTH = 4; // 2^8 * 16bit = 4096bit
 
 
-wire tx_en = 1;
-wire rx_en = 1;
-wire [15:0] tx_in = 16'hFEDC;
+wire tx_en;
+wire [15:0] tx_in; 
+wire tx_full;
+
+reg rx_en;
 wire [15:0] rx_out;
+wire rx_empty;
 
-assign led[2] = ~^rx_out;
+initial begin
+    rx_en = 0;
+end
 
+count_feeder feed(
+    rst,
+    clk,
+    tx_en,
+    tx_in,
+    tx_full
+);
+
+assign led[0] = tx_full;
+assign led[1] = tx_en;
 
 ft600_mode245 #(RX_BUF_WIDTH, TX_BUF_WIDTH) ft600(
     rst,
@@ -36,11 +51,11 @@ ft600_mode245 #(RX_BUF_WIDTH, TX_BUF_WIDTH) ft600(
 
     tx_en,
     tx_in,
-    led[0],
+    tx_full,
 
     rx_en,
     rx_out,
-    led[1],
+    rx_empty,
 
     ft_clk,
     ft_data,
@@ -60,23 +75,50 @@ module count_feeder(
     input rst,
     input clk,
 
+    output reg en,
     output reg [15:0] out,
     input full
 );
 
 reg [7:0] val;
+reg [3:0] counter;
 
 initial begin
     val = 0;
+    counter = 0;
+    en = 0;
 end
+
+// always@(posedge clk) begin
+//     if(rst) begin
+//         val <= 0;
+//         out <= 0;
+//         counter <= 0;
+//         en <= 0;
+//     end else begin
+//         if(~full) begin
+//             en <= 0;
+//             counter <= counter + 1;
+//
+//             if (counter == {4{1'b1}}) begin
+//                 out <= ((val+1)%256 << 8) | val;
+//                 val <= val + 2;
+//                 en <= 1;
+//             end
+//         end
+//     end
+// end
 
 always@(posedge clk) begin
     if(rst) begin
         val <= 0;
         out <= 0;
+        counter <= 0;
+        en <= 0;
     end else begin
+        en <= 1;
         if(~full) begin
-            out <= (val << 8) | ((val + 1)%256);
+            out <= ((val+1)%256 << 8) | val;
             val <= val + 2;
         end
     end
