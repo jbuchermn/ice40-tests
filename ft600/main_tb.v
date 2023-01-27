@@ -80,6 +80,10 @@ initial begin
     ft_txe = 1'b1;
 
     #20000;
+
+    ft_rxf = 1'b0;
+
+
     $finish;
 end
 endmodule

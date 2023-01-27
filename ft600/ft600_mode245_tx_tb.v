@@ -45,15 +45,12 @@ wire rx_en = 0;
 wire [15:0] rx_out;
 wire rx_empty;
 
-wire tx_en2;
-wire [15:0] tx_in2;
-
 ft600_mode245 ft600(
     rst,
     clk,
 
-    tx_en2,
-    tx_in2,
+    tx_en,
+    tx_in,
     tx_full,
 
     rx_en,
@@ -70,13 +67,17 @@ ft600_mode245 ft600(
     ft_wr
 );
 
+reg [7:0] dummy;
+
 count_feeder count(
     rst,
     clk,
 
-    tx_en2,
-    tx_in2,
-    tx_full
+    tx_en,
+    tx_in,
+    tx_full,
+
+    dummy
 );
 
 initial begin
@@ -98,47 +99,26 @@ initial begin
     $dumpvars(0, rx_out);
     $dumpvars(0, rx_empty);
     $dumpvars(0, ft600);
+    $dumpvars(0, count);
+
+    $monitor("t=%3d ft_data=%04X\n",$time,ft_data);
 
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
 
-    tx_in = 16'hFEDC;
-    tx_en = 0;
-
-    #1200
-
-    #10;
-    tx_en = 1;
-    tx_in = 16'hBEB0;
-
-    #10;
-    tx_in = 16'hBCB0;
-
-    #10;
-    tx_in = 16'hAAB0;
-
-    #10;
-    tx_en = 0;
+    #2000;
+    ft_txe = 0;
 
     #10000;
-    ft_txe = 0;
-
-    #199
     ft_txe = 1;
 
-    #100000;
-
-
-    tx_in = 16'hFFAA;
-    tx_en = 1;
-
-    #10;
-    tx_en = 0;
-
-    #50
+    #1000;
     ft_txe = 0;
 
-    #50000;
+    #300;
+    ft_txe = 1;
+
+    #10000;
 
     $finish;
 end

@@ -43,13 +43,25 @@ assign _ft_data = ft_data;
 wire [1:0] _ft_be;
 assign _ft_be = ft_be;
 
-wire tx_en = 0;
+wire tx_en;
 wire [15:0] tx_in;
 wire tx_full;
 
-wire rx_en = 1;
+wire rx_en;
 wire [15:0] rx_out;
 wire rx_empty;
+
+wire [7:0] led;
+
+count_reader read(
+    rst,
+    clk,
+    rx_en,
+    rx_out,
+    rx_empty,
+
+    led
+);
 
 ft600_mode245 ft600(
     rst,
@@ -92,42 +104,18 @@ initial begin
     $dumpvars(0, rx_out);
     $dumpvars(0, rx_empty);
     $dumpvars(0, ft600);
+    $dumpvars(0, read);
 
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
     ft_data = 16'h0123;
     ft_be = 2'b11;
 
-    #20000;
+    #1002;
     ft_rxf = 1'b0;
 
     #30
     ft_data = 16'h4567;
-
-    #10
-    ft_data = 16'h89AB;
-
-    #10
-    ft_data = 16'hCDEF;
-
-    #10
-    ft_data = 16'hFFEE;
-
-    #10
-    ft_data = 16'hDDCC;
-
-    #10
-    ft_data = 16'hBBAA;
-
-    #10
-    ft_data = 16'h9988;
-
-    #10
-    ft_data = 16'h7766;
-
-    #10
-    ft_data = 16'h55;
-    ft_be = 2'b10;
 
     #10;
     ft_rxf = 1'b1;

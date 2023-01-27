@@ -100,8 +100,6 @@ assign w_next_write_ptr_flip = (1 << ADDR_WIDTH) ^ w_next_write_ptr;
 initial begin
     r_read_ptr = 0;
     w_write_ptr = 0;
-    w_full = 0;
-    r_empty = 0;
 end
 
 /* Gray-codes */
@@ -122,25 +120,23 @@ wire [ADDR_WIDTH:0] rg_write_ptr;
 bin2gray_crossdomain #(ADDR_WIDTH+1) b2g_r_cd(rst, w_clk, r_read_ptr, wg_read_ptr);
 bin2gray_crossdomain #(ADDR_WIDTH+1) b2g_w_cd(rst, r_clk, w_write_ptr, rg_write_ptr);
 
+wire w_full0 = (wg_write_ptr_flip == wg_read_ptr);
+wire w_full1 = (wg_next_write_ptr_flip == wg_read_ptr);
+
+wire r_empty0 = (rg_read_ptr == rg_write_ptr); 
+wire r_empty1 = (rg_next_read_ptr == rg_write_ptr);
 
 /* Write clock domain */
 always@(posedge w_clk) begin
     if(rst) begin
-        w_write_ptr = 0;
-        w_full = 0;
+        w_write_ptr <= 0;
+        w_full <= 0;
     end else begin
-
-        /* write_ptr_flip == read_ptr */
-        if(wg_write_ptr_flip == wg_read_ptr) begin
-            w_full <= 1;
-        end else begin
-            if(w_en & ~w_full) begin
-                buffer[w_write_addr] <= w_in;
-                w_write_ptr <= w_write_ptr + 1;
-            end
-
-            /* next_write_ptr_flip == read_ptr */
-            w_full <= wg_next_write_ptr_flip == wg_read_ptr;
+        w_full <= w_full0;
+        if(w_en & ~w_full0) begin
+            buffer[w_write_addr] <= w_in;
+            w_write_ptr <= w_write_ptr + 1;
+            w_full <= w_full1;
         end
     end
 end
@@ -149,24 +145,19 @@ end
 /* Read clock domain */
 always@(posedge r_clk) begin
     if(rst) begin
-        r_read_ptr = 0;
-        r_empty = 0;
+        r_read_ptr <= 0;
+        r_empty <= 1;
+        r_out <= 0;
     end else begin
-
-        /* read_ptr == write_ptr */
-        if(rg_read_ptr == rg_write_ptr) begin
-            r_empty <= 1;
-        end else begin
-            if(r_en & ~r_empty) begin
-                r_out <= buffer[r_read_addr];
-                r_read_ptr <= r_read_ptr + 1;
-            end
-
-            /* next_read_ptr == write_ptr */
-            r_empty <= rg_next_read_ptr == rg_write_ptr;
+        r_empty <= r_empty0;
+        if(r_en & ~r_empty0) begin
+            r_out <= buffer[r_read_addr];
+            r_read_ptr <= r_read_ptr + 1;
+            r_empty <= r_empty1;
         end
     end
 end
+
 
 
 
