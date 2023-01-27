@@ -18,8 +18,8 @@ module main(
 wire rst;
 assign rst = ~rst_n;
 
-parameter RX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
-parameter TX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
+parameter RX_BUF_WIDTH = 4; // 2^8 * 16bit = 4096bit
+parameter TX_BUF_WIDTH = 4; // 2^8 * 16bit = 4096bit
 
 
 wire tx_en;

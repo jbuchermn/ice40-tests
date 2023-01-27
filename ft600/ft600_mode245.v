@@ -40,8 +40,7 @@ async_fifo #(16, TX_BUF_WIDTH) tx_fifo(
     tx_in,
     tx_full,
 
-    /* TX happens on negedge ft_clk */
-    ~ft_clk,
+    ft_clk,
     tx_r_en,
     tx_r_out,
     tx_r_empty
@@ -58,7 +57,6 @@ async_fifo #(16, RX_BUF_WIDTH) rx_fifo(
     ft_data, // TODO: Handle strobe
     rx_w_full,
 
-    /* RX happens on posedge ft_clk */
     clk,
     rx_en,
     rx_out,
@@ -66,7 +64,6 @@ async_fifo #(16, RX_BUF_WIDTH) rx_fifo(
 );
 
 /* Piping */
-wire [15: 0] tx_out;
 assign ft_data = ft_oe ? tx_r_out : 16'hz;
 assign ft_be = ft_oe ? 2'b11 : 2'hz; // We only support even-sized packets
 
@@ -90,49 +87,38 @@ end
 
 
 /* Clock domain FT600 */
-always@(negedge ft_clk) begin
-    if(rst) begin
-        tx_r_en <= 0;
-        ft_wr <= 1;
-
-    end else begin
-        tx_r_en <= 0;
-
-        if(state == S_IDLE) begin
-            ft_wr <= 1;
-
-        end else if(state == S_READING) begin
-            ft_wr <= 1;
-
-        end else if(state == S_WRITING) begin
-            ft_wr <= tx_r_empty;
-            tx_r_en <= ~tx_r_empty & ~ft_wr;
-        end
-
-    end
-end
-
 always@(posedge ft_clk) begin
     if(rst) begin
         state <= S_IDLE;
-        rx_w_en <= 0;
         ft_oe <= 1;
         ft_rd <= 1;
+        ft_wr <= 1;
+
+        tx_r_en <= 0;
+        rx_w_en <= 0;
 
     end else begin
-        ft_oe <= 1;
         ft_rd <= 1;
+        ft_wr <= 1;
+
         rx_w_en <= 0;
+        tx_r_en <= 0;
 
         if(~ft_rxf) begin
             state <= S_READING;
 
             ft_oe <= 0;
             ft_rd <= ~(~rx_w_full & ~ft_oe);
+
             rx_w_en <= ~rx_w_full & ~ft_oe;
 
         end else if(~ft_txe) begin
             state <= S_WRITING;
+
+            ft_oe <= 1;
+            ft_wr <= ~(~tx_r_empty & ft_oe);
+
+            tx_r_en <= ~tx_r_empty & ft_oe;
 
         end else begin
             state <= S_IDLE;

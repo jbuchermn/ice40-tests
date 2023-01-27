@@ -3,8 +3,8 @@
 /////////////////////////////////////////////
 module ft600_mode245_tx_tb();
 
-parameter RX_BUF_WIDTH = 4;
-parameter TX_BUF_WIDTH = 4;
+parameter RX_BUF_WIDTH = 3;
+parameter TX_BUF_WIDTH = 3;
 
 reg clk;
 reg rst;
@@ -45,7 +45,7 @@ wire rx_en = 0;
 wire [15:0] rx_out;
 wire rx_empty;
 
-ft600_mode245 ft600(
+ft600_mode245 #(RX_BUF_WIDTH, TX_BUF_WIDTH) ft600(
     rst,
     clk,
 
@@ -106,7 +106,7 @@ initial begin
     ft_txe = 1'b1;
     ft_rxf = 1'b1;
 
-    #2000;
+    #2006;
     ft_txe = 0;
 
     #10000;
