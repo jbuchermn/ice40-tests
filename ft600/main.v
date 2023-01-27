@@ -18,8 +18,8 @@ module main(
 wire rst;
 assign rst = ~rst_n;
 
-parameter RX_BUF_WIDTH = 4; // 2^8 * 16bit = 4096bit
-parameter TX_BUF_WIDTH = 4; // 2^8 * 16bit = 4096bit
+parameter RX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
+parameter TX_BUF_WIDTH = 8; // 2^8 * 16bit = 4096bit
 
 
 wire tx_en;
@@ -95,7 +95,7 @@ module count_feeder(
 );
 
 reg [7:0] val;
-reg [3:0] counter;
+reg [1:0] counter;
 
 initial begin
     val = 0;
@@ -114,7 +114,7 @@ always@(negedge clk) begin
         counter <= 0;
     end else begin
         counter <= counter + 1;
-        if(~full/* & counter == 0*/) begin
+        if(~full & counter == 0) begin
             en <= 1;
             out <= (val << 8) | val;
             val <= val + 1;

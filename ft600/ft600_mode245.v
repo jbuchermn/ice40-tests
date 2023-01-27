@@ -64,8 +64,14 @@ async_fifo #(16, RX_BUF_WIDTH) rx_fifo(
 );
 
 /* Piping */
-assign ft_data = ft_oe ? tx_r_out : 16'hz;
+wire [15:0] ft_data_out;
+assign ft_data = ft_oe ? ft_data_out : 16'hz;
 assign ft_be = ft_oe ? 2'b11 : 2'hz; // We only support even-sized packets
+
+reg tx_has_pending;
+reg [15:0] tx_pending;
+
+assign ft_data_out = tx_has_pending ? tx_pending : tx_r_out;
 
 /* State */
 parameter S_IDLE = 2'b00;
@@ -97,6 +103,9 @@ always@(posedge ft_clk) begin
         tx_r_en <= 0;
         rx_w_en <= 0;
 
+        tx_has_pending <= 0;
+        tx_pending <= 0;
+
     end else begin
         ft_rd <= 1;
         ft_wr <= 1;
@@ -116,12 +125,22 @@ always@(posedge ft_clk) begin
             state <= S_WRITING;
 
             ft_oe <= 1;
-            ft_wr <= ~(~tx_r_empty & ft_oe);
+            ft_wr <= ~((~tx_r_empty | tx_has_pending) & ft_oe);
 
-            tx_r_en <= ~tx_r_empty & ft_oe;
+            tx_r_en <= ~tx_r_empty & ~tx_has_pending & ft_oe;
+
+            if(~ft_wr) begin
+                tx_has_pending <= 0;
+                tx_r_en <= ~tx_r_empty & ft_oe;
+            end
 
         end else begin
             state <= S_IDLE;
+        end
+
+        if(state == S_WRITING & ft_txe) begin
+            tx_has_pending <= 1;
+            tx_pending <= tx_r_out;
         end
 
     end
