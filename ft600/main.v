@@ -31,11 +31,6 @@ wire [15:0] rx_out;
 wire rx_empty;
 
 wire [7:0] dummy;
-// assign led[0] = ft_oe;
-// assign led[1] = ~ft_rd;
-// assign led[2] = ~ft_wr;
-// assign led[3] = ~ft_rxf;
-// assign led[7:4] = rx_out[3:0];
 
 count_feeder feed(
     rst,
@@ -44,7 +39,7 @@ count_feeder feed(
     tx_in,
     tx_full,
 
-    led
+    dummy
 );
 
 count_reader read(
@@ -54,7 +49,7 @@ count_reader read(
     rx_out,
     rx_empty,
 
-    dummy
+    led
 );
 
 ft600_mode245 #(RX_BUF_WIDTH, TX_BUF_WIDTH) ft600(
@@ -91,19 +86,17 @@ module count_feeder(
     output reg [15:0] out,
     input full,
 
-    output [7:0] status
+    output reg [7:0] status
 );
 
 reg [7:0] val;
-reg [1:0] counter;
+reg [4:0] counter;
 
 initial begin
     val = 0;
     en = 0;
     counter = 0;
 end
-
-assign status = val;
 
 
 always@(negedge clk) begin
@@ -112,9 +105,28 @@ always@(negedge clk) begin
         out <= 0;
         en <= 0;
         counter <= 0;
+        status <= 0;
     end else begin
-        counter <= counter + 1;
-        if(~full & counter == 0) begin
+        if(full) begin
+            status <= 8'hF0;
+        end else begin
+            status <= 8'hEE;
+        end
+        // /* non saturated */
+        // en <= 0;
+        // if(~full) begin
+        //     counter <= counter + 1;
+        //     if(counter == 0) begin
+        //         en <= 1;
+        //         out <= (val << 8) | val;
+        //         if(~full) begin
+        //             val <= val + 1;
+        //         end
+        //     end
+        // end
+
+        /* saturated */
+        if(~full) begin
             en <= 1;
             out <= (val << 8) | val;
             val <= val + 1;
@@ -135,13 +147,15 @@ module count_reader(
     input [15:0] in,
     input empty,
 
-    output [7:0] status
+    output reg [7:0] status
 );
 
 initial begin
     en = 1;
 end
 
+wire [7:0] first;
+wire [7:0] second;
 assign first = in[15:8];
 assign second = in[7:0];
 reg [7:0] value;
@@ -162,14 +176,14 @@ initial begin
     counter = 0;
 end
 
-assign status = counter[8:1];
 
 always@(posedge clk) begin
     if(rst) begin
         value <= 0;
-
         errors <= 0;
         counter <= 0;
+
+        status <= 0;
     end else begin
         if(~empty) begin
             value <= second;
@@ -177,6 +191,7 @@ always@(posedge clk) begin
             else if((first != n_value) | (second != n_first)) errors <= errors + 1;
 
             counter <= counter + 2;
+            status <= counter[17:10]; //kB
         end
     end
 

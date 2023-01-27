@@ -117,7 +117,7 @@ initial begin
     #30
     ft_data = 16'h4567;
 
-    #10;
+    #1000;
     ft_rxf = 1'b1;
 
     #20000;

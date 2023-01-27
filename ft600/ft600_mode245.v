@@ -138,7 +138,8 @@ always@(posedge ft_clk) begin
             state <= S_IDLE;
         end
 
-        if(state == S_WRITING & ft_txe) begin
+        /* Last package was not written - store in pending */
+        if(state == S_WRITING & ft_txe & ~ft_wr) begin
             tx_has_pending <= 1;
             tx_pending <= tx_r_out;
         end

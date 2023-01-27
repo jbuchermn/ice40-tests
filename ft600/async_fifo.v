@@ -149,11 +149,10 @@ always@(posedge r_clk) begin
         r_empty <= 1;
         r_out <= 0;
     end else begin
-        r_empty <= r_empty0;
-        if(r_en & ~r_empty0) begin
+        r_empty <= (r_empty0 | r_empty1);
+        if(r_en & ~(r_empty0 | r_empty1)) begin
             r_out <= buffer[r_read_addr];
             r_read_ptr <= r_read_ptr + 1;
-            r_empty <= r_empty1;
         end
     end
 end
