@@ -54,7 +54,7 @@ async_fifo #(16, RX_BUF_WIDTH) rx_fifo(
 
     ft_clk,
     rx_w_en,
-    ft_data, // TODO: Handle strobe
+    ft_data,
     rx_w_full,
 
     clk,
@@ -74,6 +74,8 @@ reg [15:0] tx_pending;
 assign ft_data_out = tx_has_pending ? tx_pending : tx_r_out;
 
 /* State */
+
+// TODO: Probably not necessary
 parameter S_IDLE = 2'b00;
 parameter S_READING = 2'b01;
 parameter S_WRITING = 2'b10;
@@ -120,6 +122,7 @@ always@(posedge ft_clk) begin
             ft_rd <= ~(~rx_w_full & ~ft_oe);
 
             rx_w_en <= ~rx_w_full & ~ft_oe;
+            // TODO: Handle strobe on ft_be
 
         end else if(~ft_txe) begin
             state <= S_WRITING;

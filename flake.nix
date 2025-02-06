@@ -7,25 +7,27 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-  flake-utils.lib.eachDefaultSystem (
-    system:
-    let
-      pkgs = import nixpkgs {
-        inherit system;
-      };
-    in
-    {
-      devShell =
-      with pkgs; mkShell {
-        buildInputs = [
-          yosys
-          nextpnr
-          icestorm
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in
+      {
+        devShell =
+          with pkgs; mkShell {
+            buildInputs = [
+              yosys
+              nextpnr
+              icestorm
 
-          verilog  # icarus
-          gtkwave
-        ];
-      };
-    }
-  );
+              minicom
+
+              verilog # icarus
+              gtkwave
+            ];
+          };
+      }
+    );
 }

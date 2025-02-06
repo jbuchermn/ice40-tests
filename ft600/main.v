@@ -191,7 +191,9 @@ always@(posedge clk) begin
             else if((first != n_value) | (second != n_first)) errors <= errors + 1;
 
             counter <= counter + 2;
-            status <= counter[17:10]; //kB
+
+            // status <= counter[17:10]; //kB
+            status <= errors[7:0];
         end
     end
 
